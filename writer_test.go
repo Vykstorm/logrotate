@@ -2,8 +2,6 @@ package logrotate
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/require"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -11,13 +9,15 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestWriter(t *testing.T) {
 	logger := log.New(os.Stderr, "", log.LstdFlags)
 
 	setup := func(t *testing.T) (string, func()) {
-		dir, err := ioutil.TempDir("", "")
+		dir, err := os.MkdirTemp("", "")
 		require.NoError(t, err)
 
 		cleanup := func() {
@@ -57,11 +57,11 @@ func TestWriter(t *testing.T) {
 		require.NoError(t, err, "write must succeed")
 		require.NoError(t, w.Close(), "must close writer")
 
-		files, err := ioutil.ReadDir(dir)
+		files, err := os.ReadDir(dir)
 		require.NoError(t, err)
 
 		require.Len(t, files, 1, "must write exactly one file")
-		written, err := ioutil.ReadFile(filepath.Join(dir, files[0].Name()))
+		written, err := os.ReadFile(filepath.Join(dir, files[0].Name()))
 		require.NoError(t, err, "must read file")
 		require.Equal(t, message, written)
 	})
@@ -87,7 +87,7 @@ func TestWriter(t *testing.T) {
 
 		require.NoError(t, w.Close())
 
-		files, err := ioutil.ReadDir(dir)
+		files, err := os.ReadDir(dir)
 		require.NoError(t, err)
 
 		require.Len(t, files, 2, "must produce 2 files")
@@ -112,7 +112,7 @@ func TestWriter(t *testing.T) {
 		}
 
 		require.NoError(t, w.Close())
-		files, err := ioutil.ReadDir(dir)
+		files, err := os.ReadDir(dir)
 		require.NoError(t, err)
 		require.Len(t, files, 2, "should produce 2 files")
 	})
@@ -144,17 +144,19 @@ func TestWriter(t *testing.T) {
 		wg.Wait()
 		require.NoError(t, w.Close(), "must close")
 
-		files, err := ioutil.ReadDir(dir)
+		files, err := os.ReadDir(dir)
 		require.NoError(t, err)
 		require.Len(t, files, 1, "must write a single file")
-		require.Equal(t, int64(rows*writers*messageSize), files[0].Size(), "must write all bytes")
+		fileinfo, err := files[0].Info()
+		require.NoError(t, err)
+		require.Equal(t, int64(rows*writers*messageSize), fileinfo.Size(), "must write all bytes")
 	})
 }
 
 func benchmarkWriter(b *testing.B, messages int, messageSize int, writers int) {
 	logger := log.New(os.Stderr, "", log.LstdFlags)
 
-	dir, err := ioutil.TempDir("", "")
+	dir, err := os.MkdirTemp("", "")
 	if err != nil {
 		b.Fatalf("err: %v", err)
 	}
