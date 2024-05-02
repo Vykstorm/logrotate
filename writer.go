@@ -3,12 +3,13 @@ package logrotate
 import (
 	"bufio"
 	"fmt"
-	"github.com/pkg/errors"
 	"log"
 	"os"
 	"path/filepath"
 	"sync"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 func DefaultFilenameFunc() string {
@@ -42,6 +43,10 @@ type Options struct {
 	// 	2020-03-28_15-00-945-<random-hash>.log
 	// When FileNameFunc is not specified, DefaultFilenameFunc will be used.
 	FileNameFunc func() string
+
+	// FlushAfterEveryWrite specifies whether the writer should flush
+	// the buffer after every write.
+	FlushAfterEveryWrite bool
 }
 
 // Writer is a concurrency-safe writer with file rotation.
@@ -139,13 +144,20 @@ func (w *Writer) listen() {
 		if _, err := w.bw.Write(b); err != nil {
 			w.logger.Println("Failed to write to file.", err)
 		}
+
+		if w.opts.FlushAfterEveryWrite {
+			if err := w.flushCurrentFile(); err != nil {
+				w.logger.Println("Failed to flush to file.", err)
+			}
+		}
+
 		w.bytesWritten += size
 	}
 
 	close(w.done)
 }
 
-func (w *Writer) closeCurrentFile() error {
+func (w *Writer) flushCurrentFile() error {
 	if err := w.bw.Flush(); err != nil {
 		return errors.Wrap(err, "failed to flush buffered writer")
 	}
@@ -154,11 +166,16 @@ func (w *Writer) closeCurrentFile() error {
 		return errors.Wrap(err, "failed to sync current log file")
 	}
 
-	if err := w.f.Close(); err != nil {
-		return errors.Wrap(err, "failed to close current log file")
+	w.bytesWritten = 0
+
+	return nil
+}
+
+func (w *Writer) closeCurrentFile() error {
+	if err := w.flushCurrentFile(); err != nil {
+		return err
 	}
 
-	w.bytesWritten = 0
 	return nil
 }
 
