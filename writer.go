@@ -166,7 +166,8 @@ func (w *Writer) flushCurrentFile() error {
 		return errors.Wrap(err, "failed to sync current log file")
 	}
 
-	w.bytesWritten = 0
+	// THIS breaks  FileMaxSize option
+	// w.bytesWritten = 0
 
 	return nil
 }
