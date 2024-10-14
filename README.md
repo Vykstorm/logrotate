@@ -7,7 +7,7 @@ However, some applications are constrained to only application-side log rotation
 
 ## Usage
 ```
-go get github.com/easyCZ/logrotate
+go get github.com/Vykstorm/logrotate
 ```
 
 ```go
@@ -19,7 +19,7 @@ import (
 	"os"
 	"time"
     
-    "github.com/easyCZ/logrotate"
+    "github.com/Vykstorm/logrotate"
 )
 
 func main() {
@@ -60,7 +60,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/easyCZ/logrotate"
+	"github.com/Vykstorm/logrotate"
 )
 
 func main() {
@@ -89,7 +89,7 @@ package main
 import (
 	"os"
 	log "github.com/sirupsen/logrus"
-	logrotate "github.com/easyCZ/logrotate"
+	logrotate "github.com/Vykstorm/logrotate"
 )
 
 func init() {

@@ -1,4 +1,4 @@
-module github.com/easyCZ/logrotate
+module github.com/Vykstorm/logrotate
 
 go 1.21
 
